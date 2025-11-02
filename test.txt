@@ -1,0 +1,6 @@
+Error: connection failed
+Warning: timeout occurred
+Info: process started
+ERROR: critical failure
+Debug: test completed
+Error: process failure

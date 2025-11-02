@@ -1,0 +1,16 @@
+.vscode/
+build/
+
+# Compiled Object files
+*.o
+*.obj
+
+# Compiled Executables
+*.exe
+mini-grep
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile

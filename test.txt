@@ -4,3 +4,5 @@ Info: process started
 ERROR: critical failure
 Debug: test completed
 Error: process failure
+Info: process ended
+Critical: system down

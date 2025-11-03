@@ -5,6 +5,7 @@
 #include <string>
 #include <cstring>
 #include <iomanip>
+#include <vector>
 
 void printUsage();
 void demonstrateCopyConstructor();
@@ -62,8 +63,9 @@ int main(int argc, char* argv[]) {
     
     bool caseInsensitive = false;
     bool wholeWord = false;
-    std::string pattern;
+    std::vector<std::string> patterns;
     std::string filename;
+    bool multiPattern = false;
     
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -71,45 +73,100 @@ int main(int argc, char* argv[]) {
             caseInsensitive = true;
         } else if (arg == "-w") {
             wholeWord = true;
-        } else if (pattern.empty()) {
-            pattern = arg;
+        } else if (arg == "-m") {
+            multiPattern = true;
         } else if (filename.empty()) {
-            filename = arg;
+            if (patterns.empty()) {
+                patterns.push_back(arg);
+            } else {
+                filename = arg;
+            }
+        } else {
+            patterns.push_back(arg);
         }
     }
     
     std::cout << std::endl;
-    if (pattern.empty() || filename.empty()) {
+    if (patterns.empty() || filename.empty()) {
         std::cerr << "Error: Pattern and file are required!" << std::endl;
         printUsage();
         return 1;
     }
-    
-    std::cout << "Searching for \"" << pattern << "\" in \"" << filename << "\"" << std::endl << std::endl;
-    
-    FileBuffer buffer(filename);
-    if (!buffer.isValid()) {
+        
+    FileBuffer originalBuffer(filename);
+    if (!originalBuffer.isValid()) {
         std::cerr << "Error: Cannot read file!" << std::endl;
         return 1;
     }
+
+    if (patterns.size() == 1 && !multiPattern) {
+        std::cout << "\n[Single Pattern Search Mode]" << std::endl;
+        std::cout << "Searching for: \"" << patterns[0] << "\"" << std::endl;
+        
+        Searcher searcher(caseInsensitive, wholeWord);
+        Cache results = searcher.search(originalBuffer, patterns[0]);
+        searcher.displayMatches();
+        
+    } else {
+        std::cout << "\n[Multi-Pattern Search Mode]" << std::endl;
+        std::cout << "Patterns to search: " << patterns.size() << std::endl;
+        
+        std::vector<FileBuffer> bufferCopies;
+        std::vector<Cache> allResults;
+        bufferCopies.reserve(patterns.size());
+        allResults.reserve(patterns.size());
+
+        
+        for (size_t i = 0; i < patterns.size(); ++i) {
+            std::cout << "\nCreating copy " << (i+1) << " for pattern \"" 
+                      << patterns[i] << "\"..." << std::endl;
+            FileBuffer bufferCopy = originalBuffer;
+            bufferCopies.push_back(std::move(bufferCopy));
+        }
+
+        for (size_t i = 0; i < patterns.size(); ++i) {
+            std::cout << "\nSearch " << (i+1) << ": Pattern \"" << patterns[i] << "\"" << std::endl;
+            
+            Searcher searcher(caseInsensitive, wholeWord);
+            Cache results = searcher.search(bufferCopies[i], patterns[i]);
+            
+            searcher.displayMatches();
+            
+            std::cout << "Moving results into storage..." << std::endl;
+            allResults.push_back(std::move(results));
+        }
+
+        for (size_t i = 0; i < allResults.size(); ++i) {
+            std::cout << "Pattern " << (i+1) << " - ";
+            allResults[i].displayResults();
+        }
+
+        if (!allResults.empty()) {
+            std::cout << "\nRetrieving results for first pattern (creates a copy)..." << std::endl;
+            Cache firstResult = allResults[0];
+            std::cout << "Copy retrieved: ";
+            firstResult.displayResults();
+            std::cout << "Original still in storage: ";
+            allResults[0].displayResults();
+            std::cout << std::endl;
+        }
+    }
     
-    Searcher searcher(caseInsensitive, wholeWord);
-    Cache results = searcher.search(buffer, pattern);
-    
-    searcher.displayMatches();
-    
+    std::cout << "\nSearch complete!" << std::endl;
     return 0;
 }
 
 
 void printUsage() {
-    std::cout << "\nUsage: ./build/mini-grep [options] <pattern> <file>" << std::endl;
+    std::cout << "\nUsage: ./build/mini-grep [options] <pattern> <file> [pattern2] [pattern3]" << std::endl;
     std::cout << "Options:" << std::endl;
     std::cout << "  -i    Case-insensitive search" << std::endl;
     std::cout << "  -w    Whole word matching" << std::endl;
+    std::cout << "  -m    Force multi-pattern mode (even with 1 pattern)" << std::endl;
     std::cout << "\nExamples:" << std::endl;
     std::cout << "  mini-grep error log.txt" << std::endl;
     std::cout << "  mini-grep -w test code.cpp" << std::endl;
+    std::cout << "    mini-grep -i error test.txt Error ERROR" << std::endl;
 }
 
 
@@ -129,11 +186,12 @@ void demonstrateCopyConstructor() {
 }
  
 void demonstrateMoveConstructor() {
-
-    std::cout << "Creating Cache through factory function:" << std::endl;
-    Cache cache = Cache::createOptimizedCache("test");    
+    FileBuffer fb1("test.txt");
+    FileBuffer fb2(std::move(fb1));
+    std::cout << "- fb1 valid: " << fb1.isValid() << std::endl;
+    std::cout << "- fb2 valid: " << fb2.isValid() << std::endl;
+       
 }
-
 
 void demonstrateDestructor() {
     FileBuffer fb("test.txt");

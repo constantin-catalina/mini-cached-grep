@@ -110,9 +110,3 @@ void Cache::displayResults() const {
     std::cout << "Results for \"" << *m_pattern << "\": " 
               << m_size << " found" << std::endl;
 }
-
-Cache Cache::createOptimizedCache(const std::string& pattern) {
-    std::cout << "\n[Factory] Creating optimized cache..." << std::endl;
-    Cache temp(pattern, 20);
-    return temp;
-}

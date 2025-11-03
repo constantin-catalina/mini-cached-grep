@@ -24,8 +24,6 @@ public:
     void displayResults() const;
     size_t getSize() const { return m_size; }
     const std::string& getPattern() const { return *m_pattern; }
-    
-    static Cache createOptimizedCache(const std::string& pattern);
 };
 
 #endif

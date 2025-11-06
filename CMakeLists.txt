@@ -23,3 +23,7 @@ include_directories(inc)
 set(myfiles src/main.cpp src/Cache.cpp src/FileBuffer.cpp src/Searcher.cpp)
 
 add_executable(mini-grep ${myfiles})
+
+set_target_properties(mini-grep PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
